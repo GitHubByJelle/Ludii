@@ -1,6 +1,7 @@
 package search.mcts.nodes;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,7 +25,7 @@ import training.expert_iteration.ExItExperience.ExItExperienceState;
 /**
  * Abstract base class for nodes in MCTS search trees.
  * 
- * @author Dennis Soemers
+ * @author Dennis Soemers, additions made by Jelle Jansen
  */
 public abstract class BaseNode
 {
@@ -326,6 +327,14 @@ public abstract class BaseNode
     }
     
     /**
+     * @return Total scores (sum of scores) backpropagated into this node for all players
+     */
+    public double[] totalScores()
+    {
+    	return totalScores;
+    }
+    
+    /**
      * @param player Player index
      * @return Sum of squared scores backpropagated into this node for player. NOTE: also adds virtual losses.
      */
@@ -348,6 +357,12 @@ public abstract class BaseNode
     	}
     	numVirtualVisits.decrementAndGet();
     }
+    
+    /**
+     * Backpropagates game theoretical values trough the tree (e.g. when using MCTS solver)
+     * @param utilities game theoretical values for all players
+     */
+    public void updateGameTheoreticalValues(final double[] utilities) {}
     
     /**
      * @param agent Agent index
@@ -379,6 +394,18 @@ public abstract class BaseNode
 			return 0.0;
 		}
     }
+    
+    /**
+     * Create a string with the move, accumulated score, number of visits and expectedScore.
+     */
+    @Override
+    public String toString() {
+        final int mover = this.contextRef().state().playerToAgent(this.contextRef().state().mover()) == 1 ? 2 : 1;
+        return String.format("from %d, to %d. Scores: %s, numVisits: %d, value: %.4f",
+                this.parentMove.from(), this.parentMove.to(),
+                Arrays.toString(this.totalScores), this.numVisits, this.expectedScore(mover));
+    }
+    
 	
 	//-------------------------------------------------------------------------
     
