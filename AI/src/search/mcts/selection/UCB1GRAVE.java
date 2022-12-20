@@ -105,6 +105,7 @@ public class UCB1GRAVE implements SelectionStrategy
         	else
         	{
         		meanScore = child.exploitationScore(moverAgent);
+        		final int childVisits = child.numVisits() + child.numVirtualVisits();
         		final Move move = child.parentMove();
         		final NodeStatistics graveStats = currentRefNode.get().graveStats(new MoveKey(move, current.contextRef().trial().numMoves()));
 //        		if (graveStats == null)
@@ -116,11 +117,22 @@ public class UCB1GRAVE implements SelectionStrategy
 //        			System.out.println("current legal actions = " + Arrays.toString(((Node) current).legalActions()));
 //        			System.out.println("current context legal moves = " + current.contextRef().activeGame().moves(current.contextRef()));
 //        		}
-        		final double graveScore = graveStats.accumulatedScore;
-        		final int graveVisits = graveStats.visitCount;
-        		final int childVisits = child.numVisits() + child.numVirtualVisits();
-        		meanAMAF = graveScore / graveVisits;
-        		beta = graveVisits / (graveVisits + childVisits + bias * graveVisits * childVisits);
+        		
+        		// Copied from McGrave
+        		if (graveStats == null)
+        		{
+        			// In single-threaded MCTS this should always be a bug, 
+        			// but in multi-threaded MCTS it can happen
+        			meanAMAF = 0.0;
+        			beta = 0.0;
+        		}
+        		else
+        		{
+        			final double graveScore = graveStats.accumulatedScore;
+            		final int graveVisits = graveStats.visitCount;
+            		meanAMAF = graveScore / graveVisits;
+            		beta = graveVisits / (graveVisits + childVisits + bias * graveVisits * childVisits);
+        		}
 
         		explore = Math.sqrt(parentLog / childVisits);
         	}
